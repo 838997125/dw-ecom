@@ -1,0 +1,60 @@
+PATH=/Library/Frameworks/Python.framework/Versions/3.12/bin:/Users/<USER>/.local/bin:/usr/bin:/bin
+WORKDIR=/Users/<USER>/.openclaw/workspace/dw-ecom
+LOGDIR=/Users/<USER>/.openclaw/workspace/dw-ecom/logs/cron
+
+# ---- 高频同步（5~15分钟） ----
+*/5 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table SALEOUTMT >> $LOGDIR/saleoutmt.log 2>&1
+*/10 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table SALENOTESMT >> $LOGDIR/salenotesmt.log 2>&1
+*/15 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table K_D3OMS_STOCKOUTMT_PLAN >> $LOGDIR/oms_stockout.log 2>&1
+1-59/15 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table K_D3OMS_ORDERREFUNDMT >> $LOGDIR/oms_refund.log 2>&1
+2-59/15 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table ZZERP_CK_KPD_W >> $LOGDIR/ck_kpd.log 2>&1
+3-59/15 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table K_PRN_SENDLOG >> $LOGDIR/prn_sendlog.log 2>&1
+
+# ---- 每小时同步（错开1分钟） ----
+10 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table PURORDERMT >> $LOGDIR/purchase.log 2>&1
+11 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table PURINMT >> $LOGDIR/purchase.log 2>&1
+12 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table ZZERP_GT_KPD_W >> $LOGDIR/kpd_hourly.log 2>&1
+13 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table ZZERP_XT_KPD_W >> $LOGDIR/kpd_hourly.log 2>&1
+14 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table ZZERP_RK_KPD_W >> $LOGDIR/kpd_hourly.log 2>&1
+
+# ---- 2026-08-04 新增: 退货/调拨 增量同步 ----
+15 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table RETBILLMT >> $LOGDIR/return_purchase.log 2>&1
+16 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table SALERTNMT >> $LOGDIR/return_sale.log 2>&1
+17 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table TRBILLMT >> $LOGDIR/transfer.log 2>&1
+
+# ---- 每小时第20分钟起,各错开1分钟 ----
+20 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table BATCHCODE >> $LOGDIR/inventory.log 2>&1
+21 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table ANGLEBALANCE >> $LOGDIR/inventory.log 2>&1
+22 * * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table IMEIHIS >> $LOGDIR/imei.log 2>&1
+
+# ---- 主数据（6小时一次） ----
+30 0,6,12,18 * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table GOODSDOC >> $LOGDIR/master.log 2>&1
+31 0,6,12,18 * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table CLIENTDOC >> $LOGDIR/master.log 2>&1
+32 0,6,12,18 * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table SUPPLYDOC >> $LOGDIR/master.log 2>&1
+33 0,6,12,18 * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table STOREHOUSE >> $LOGDIR/master.log 2>&1
+34 0,6,12,18 * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table STAFFDOC >> $LOGDIR/master.log 2>&1
+35 0,6,12,18 * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table GOODSATTR >> $LOGDIR/master2.log 2>&1
+36 0,6,12,18 * * * cd $WORKDIR && python3 -m src.cdc.cdc incremental --table BUSINESSDOC >> $LOGDIR/master2.log 2>&1
+
+# ---- WMS 全量刷新（无增量字段，每日凌晨3:30） ----
+30 3 * * * cd $WORKDIR && python3 -m src.cdc.cdc full --table SKWMS_JGM_W >> $LOGDIR/skwms_jgm_w.log 2>&1
+
+# ---- 数据校验/健康/状态 ----
+0 2 * * * cd $WORKDIR && python3 -m src.cdc.cdc verify --all >> $LOGDIR/daily_verify.log 2>&1
+1 2 * * * cd $WORKDIR && python3 -m src.utils.health >> $LOGDIR/daily_health.log 2>&1
+0 8 * * * cd $WORKDIR && python3 -m src.cdc.cdc status >> $LOGDIR/daily_status.log 2>&1
+
+# ---- 维度表刷新（每周一） ----
+30 8 * * 1 cd $WORKDIR && ~/.local/bin/duckdb data/duckdb/ecom.duckdb < sql/dim_schema.sql >> $LOGDIR/weekly_dim.log 2>&1
+
+# ---- 数据库压缩 ----
+0 4 * * * cd $WORKDIR && ~/.local/bin/duckdb data/duckdb/ecom.duckdb -c "VACUUM;" >> $LOGDIR/daily_vacuum.log 2>&1
+
+# ---- 退货订单同步到钉钉多维表格（每10分钟） ----
+*/10 * * * * cd /Users/<USER>/.openclaw/workspace/refund-sync && DBPASS=$ORACLE_PASSWORD   # 从环境变量注入，勿写明文 /Library/Frameworks/Python.framework/Versions/3.12/bin/python3 sync_refunds.py >> /Users/<USER>/.openclaw/workspace/refund-sync/logs/cron.log 2>&1
+
+# ---- DWS Token 刷新 ----
+*/30 * * * * /bin/bash /Users/<USER>/dws/token-refresh.sh >> /Users/<USER>/dws/token-refresh.log 2>&1
+
+# ---- MySQL 每日备份（凌晨3点, 保留3天） ----
+0 3 * * * /bin/bash /opt/homebrew/var/mysql_backups/backup.sh >> /opt/homebrew/var/mysql_backups/backup.log 2>&1

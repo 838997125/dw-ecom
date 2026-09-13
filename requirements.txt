@@ -1,0 +1,37 @@
+# ============================================================
+# dw-ecom 依赖（版本对齐生产环境 Mac mini，Python 3.12 验证通过）
+# 安装：python3 -m pip install -r requirements.txt
+# ============================================================
+
+# --- Streamlit 仪表盘 ---
+streamlit==1.60.0
+streamlit-ace==0.1.1            # app.py SQL 编辑器（可选，缺失时自动降级）
+streamlit-autorefresh==1.0.1    # 页面自动刷新
+
+# --- 数据层 ---
+duckdb==1.5.4
+pandas==3.0.3
+numpy==2.5.1
+pyarrow==24.0.0
+openpyxl==3.1.5
+xlsxwriter==3.2.9
+plotly==6.9.0
+altair==6.2.2
+
+# --- 数据源连接 ---
+oracledb==4.0.2                 # 时空 ERP (Oracle 19c+, thin 模式无需 Instant Client)
+PyMySQL==1.2.0                  # 本地 MySQL（YMSS_DING/DWD/DWS 镜像）
+cryptography==49.0.0            # PyMySQL caching_sha2_password 认证所需
+
+# --- DuckDB MCP HTTP Server ---
+fastapi==0.141.1
+uvicorn==0.51.0
+httpx==0.28.1
+pydantic==2.13.4
+
+# --- 工具 ---
+PyYAML==6.0.3
+requests==2.34.2
+
+# 测试（可选）
+pytest>=8.0

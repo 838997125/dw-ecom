@@ -1,0 +1,40 @@
+# ===== Python =====
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.venv/
+venv/
+
+# ===== 敏感配置（绝不入库）=====
+config/config.yaml
+.env
+*.env
+!.env.example
+duckdb-mcp-server/.api_key
+duckdb-mcp-server/.public_url
+.streamlit/secrets.toml
+
+# ===== 数据文件（体积巨大，新服务器自行初始化/同步）=====
+data/duckdb/*.duckdb
+data/duckdb/*.duckdb.wal
+data/duckdb/*.precompact
+data/parquet/*
+!data/duckdb/.gitkeep
+!data/parquet/.gitkeep
+
+# ===== 日志 / 产物 =====
+logs/*
+!logs/.gitkeep
+!logs/cron/.gitkeep
+output/*
+outputs/*
+archive/*
+
+# ===== 系统/编辑器 =====
+.DS_Store
+*.bak
+*.bak2
+*.bak-*
+.idea/
+.vscode/

@@ -1,0 +1,20 @@
+[Unit]
+Description=dw-ecom DuckDB MCP HTTP server (port 8765)
+After=network-online.target dw-ecom-cdc-daemon.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=__USER__
+WorkingDirectory=__INSTALL_DIR__/duckdb-mcp-server
+EnvironmentFile=__INSTALL_DIR__/.env
+Environment=MCP_HOST=0.0.0.0
+Environment=MCP_PORT=8765
+ExecStart=__INSTALL_DIR__/.venv/bin/python src/server_http.py
+Restart=always
+RestartSec=10
+StandardOutput=append:__INSTALL_DIR__/logs/mcp-http.log
+StandardError=append:__INSTALL_DIR__/logs/mcp-http.log
+
+[Install]
+WantedBy=multi-user.target

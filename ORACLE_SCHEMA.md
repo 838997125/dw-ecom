@@ -1,0 +1,124 @@
+# Oracle DHERP 数据库探查报告
+
+**探查时间**: 2026-07-22 09:51 GMT+8
+**数据库**: Oracle 12.1.0.2.0
+**连接**: <ORACLE_HOST>:1521/<SERVICE_NAME>
+**用户**: READONLY_DB_USER (只读)
+**可访问 Schema**: RACE (27 张表)
+
+## 表分类总览
+
+### 📊 主数据表 (DIM)
+
+| 表名 | 中文名 | 行数 | 列数 | 关键字段 |
+|------|--------|------|------|----------|
+| CLIENTDOC | 客户档案 | 15,010 | 57 | CLIENTID, CLIENTCODE, CLIENTTYPE, CREATERID, CREATETIME, LASTMODIFYTIME |
+| GOODSDOC | 商品档案 | 51,428 | 72 | GOODSID, GOODSCODE, GOODSNAME, BARCODE, GOODSSPEC, MANUFACTURER, CREATERID, CREATETIME, LASTMODIFYTIME |
+| GOODSATTR | 商品属性 | 51,426 | 280 | GOODSID, ISMEDICARE, MEDCARECODE, APPROVALNO, ISOTC, ISPRES, SALEP, PURP, RETAILP, LASTMODIFYTIME |
+| SUPPLYDOC | 供应商档案 | 878 | 44 | SUPPLIERSID, GYSBH, SUPPCATE, BEACTIVE, LASTMODIFYTIME |
+| STOREHOUSE | 仓库 | 9 | 34 | WHID, WHCODE, WHNAME, WHTYPE, BEACTIVE, DIRECTORID |
+| STAFFDOC | 员工档案 | 60 | 107 | STAFFID, STAFFNAME, ISSALEMAN, ISPROCURMAN, ISWARE, BEACTIVE |
+| BUSINESSDOC | 企业/商户档案 | 15,893 | 105 | BUSINESSID, BUSINESSNAME, ISCLIENTS, IS_SUPP, ISLOGISTICS, BEACTIVE |
+
+### 💰 销售表 (RAW)
+
+| 表名 | 中文名 | 行数 | 列数 | 关键字段 |
+|------|--------|------|------|----------|
+| SALENOTESMT | 销售单主表 | 664,630 | 70 | BILLNO, BILLCODE, DATES, ONTIME, CLIENTID, SALEMANID, AMOUNT(无), BILLSTATE |
+| SALENOTESDT | 销售单明细 | 865,456 | 84 | BILLNO, BILLSN, GOODSID, NUM, PRICE, TAXPRICE, AMOUNT, TAXAMOUNT, WHID |
+| SALEOUTMT | 销售出库主表 | 655,074 | 91 | BILLNO, BILLCODE, DATES, ONTIME, CLIENTID, AMOUNT, TAXAMOUNT, PROFIT, COSTAMT |
+| SALEOUTDT | 销售出库明细 | 843,363 | 82 | BILLNO, BILLSN, GOODSID, NUM, PRICE, AMOUNT, TAXAMOUNT, COSTAMT, WHID |
+
+### 📦 采购表 (RAW)
+
+| 表名 | 中文名 | 行数 | 列数 | 关键字段 |
+|------|--------|------|------|----------|
+| PURORDERMT | 采购订单主表 | 4,163 | 48 | BILLNO, DATES, SUPPLIERSID, EXPECTDATE, BILLSTATE |
+| PURORDERDT | 采购订单明细 | 18,787 | 63 | BILLNO, BILLSN, GOODSID, NUM, PRICE, TAXPRICE, AMOUNT |
+| PURINMT | 采购入库主表 | 4,648 | 61 | BILLNO, DATES, SUPPLIERSID, AMOUNT, TAXAMOUNT, COSTAMT |
+| PURINDT | 采购入库明细 | 20,196 | 75 | BILLNO, BILLSN, GOODSID, NUM, PRICE, AMOUNT, WHID |
+
+### 📋 库存表 (RAW)
+
+| 表名 | 中文名 | 行数 | 列数 | 关键字段 |
+|------|--------|------|------|----------|
+| BATCHCODE | 批次/批号 | 614,612 | 68 | ANGLEID, GOODSID, BATCHCODE, PRODUCEDATE, VALDATE, PURP, SALEP, RETAILP |
+| ANGLEBALANCE | 库位库存 | 29,038 | 15 | LOCATID, GOODSID, ANGLEID, PLACEPACK, PLACENUM, STORMAX, STORMIN |
+
+### 🌐 电商/OMS表 (RAW)
+
+| 表名 | 中文名 | 行数 | 列数 | 关键字段 |
+|------|--------|------|------|----------|
+| K_D3OMS_ORDERREFUNDMT | 退款主表 | 2,202 | 18 | ERP_ORDER_ID, REFOID, REFUNDFEE, STATUS, LASTMODIFYTIME |
+| K_D3OMS_ORDERREFUNDDT | 退款明细 | 2,234 | 14 | ERP_ORDER_ID, REFSKUID, NUM, PRICE, REFUNDFEE, LASTMODIFYTIME |
+| K_D3OMS_STOCKOUTMT_PLAN | 出库计划 | 624,334 | 34 | ERP_ORDER_ID, CODE, WAREHOUSECODE, CREATETIME, LASTMODIFYTIME, ISDONE |
+
+### 🔍 追溯/物流表 (RAW)
+
+| 表名 | 中文名 | 行数 | 列数 | 关键字段 |
+|------|--------|------|------|----------|
+| IMEIHIS | 追溯码历史 | 17,251 | 43 | IMEINO, BILLNO, GOODSID, SYSDATES, ONTIME |
+| SKWMS_JGM_W | WMS监管码 | 1,462,415 | 10 | TRAN_TYPE, TRAN_CODE, GOODSID, BATCHCODE, IMEINO, ZT |
+| K_PRN_SENDLOG | 快递日志 | 19,552 | 18 | ORDERID, BILLNO, LOGISTICCODE, SHIPPERCODE, CREATETIME |
+
+### 📝 票据视图 (RAW)
+
+| 表名 | 中文名 | 行数 | 列数 | 关键字段 |
+|------|--------|------|------|----------|
+| ZZERP_CK_KPD_W | 出库开票单 | 833,321 | 57 | BILLNO, BILLCODE, DATES, GOODSID, NUM, TAXPRICE, TAXAMOUNT, ZT |
+| ZZERP_GT_KPD_W | 共同开票单 | 774 | 43 | BILLNO, DATES, GOODSID, NUM, TAXPRICE, TAXAMOUNT, ZT |
+| ZZERP_RK_KPD_W | 入库开票单 | 17,937 | 35 | BILLNO, DATES, GOODSID, NUM, TAXPRICE, TAXAMOUNT, ZT |
+| ZZERP_XT_KPD_W | 调拨开票单 | 15,352 | 40 | BILLNO, DATES, GOODSID, NUM, TAXPRICE, TAXAMOUNT, ZT |
+
+## ⚠️ 重要注意事项
+
+### 1. 时间字段是 CHAR 类型
+所有时间字段（DATES, ONTIME, SYSDATES, CREATETIME, LASTMODIFYTIME）都是 `CHAR` 类型，不是 `TIMESTAMP` 或 `DATE`。
+- 格式通常为 `YYYY-MM-DD HH:MM:SS` 或 `YYYYMMDDHHMMSS`
+- CDC 增量抽取时需要做类型转换: `TO_TIMESTAMP(dates, 'YYYY-MM-DD HH24:MI:SS')`
+
+### 2. 增量字段
+- `LASTMODIFYTIME` - 大部分表有，适合做 CDC 增量
+- `SYSDATES` - 系统时间，记录操作时间
+- `ONTIME` - 业务发生时间
+- 部分表只有 `CREATETIME` 没有 `LASTMODIFYTIME`（如 BATCHCODE）
+
+### 3. 大表性能
+- SKWMS_JGM_W: 146 万行（追溯码，可能不需要全量同步）
+- ZZERP_CK_KPD_W: 83 万行（出库开票单）
+- SALENOTESDT: 86 万行
+- SALEOUTDT: 84 万行
+- K_D3OMS_STOCKOUTMT_PLAN: 62 万行
+
+### 4. 数据量估算
+- 核心交易表（销售+出库+明细）: ~300 万行
+- 全量同步到 DuckDB 预计 5-15 分钟
+- 增量 CDC（分钟级）: 每次几千行，秒级完成
+
+## 🎯 建议的 CDC 策略
+
+| 优先级 | 表名 | CDC 字段 | 同步频率 | 说明 |
+|--------|------|----------|----------|------|
+| P0 | SALEOUTMT | LASTMODIFYTIME | 5分钟 | 销售出库主表，KPI核心 |
+| P0 | SALEOUTDT | 无独立时间字段 | 随主表 | 跟随主表 BILLNO 增量 |
+| P0 | SALENOTESMT | LASTMODIFYTIME/SYSDATES | 5分钟 | 销售单主表 |
+| P0 | SALENOTESDT | 无独立时间字段 | 随主表 | 跟随主表 BILLNO 增量 |
+| P1 | GOODSDOC | LASTMODIFYTIME | 6小时 | 商品主数据 |
+| P1 | GOODSATTR | LASTMODIFYTIME | 6小时 | 商品属性 |
+| P1 | CLIENTDOC | LASTMODIFYTIME | 6小时 | 客户主数据 |
+| P1 | STOREHOUSE | LASTMODIFYTIME | 日级 | 仓库（变化小） |
+| P1 | SUPPLYDOC | LASTMODIFYTIME | 日级 | 供应商 |
+| P1 | STAFFDOC | LASTMODIFYTIME | 日级 | 员工 |
+| P2 | BATCHCODE | LASTMODIFYTIME | 1小时 | 批次批号 |
+| P2 | ANGLEBALANCE | LASTMODIFYTIME | 1小时 | 库位库存 |
+| P2 | PURORDERMT | SYSDATES | 1小时 | 采购订单 |
+| P2 | PURINMT | SYSDATES | 1小时 | 采购入库 |
+| P3 | K_D3OMS_STOCKOUTMT_PLAN | LASTMODIFYTIME | 15分钟 | OMS出库计划 |
+| P3 | K_D3OMS_ORDERREFUNDMT | LASTMODIFYTIME | 15分钟 | 退款 |
+| P3 | K_D3OMS_ORDERREFUNDDT | LASTMODIFYTIME | 随主表 | 退款明细 |
+| P4 | ZZERP_CK_KPD_W | LASTMODIFYTIME | 日级 | 出库开票单 |
+| P4 | ZZERP_RK_KPD_W | LASTMODIFYTIME | 日级 | 入库开票单 |
+| P4 | ZZERP_XT_KPD_W | LASTMODIFYTIME | 日级 | 调拨开票单 |
+| - | SKWMS_JGM_W | 无 | 不同步 | 追溯码，太大，按需查 |
+| - | IMEIHIS | SYSDATES | 不同步 | 追溯历史，按需查 |
+| - | K_PRN_SENDLOG | CREATETIME | 日级 | 快递日志 |

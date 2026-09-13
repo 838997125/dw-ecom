@@ -1,0 +1,19 @@
+[Unit]
+Description=dw-ecom CDC daemon (Oracle -> DuckDB incremental sync scheduler)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+# 按实际部署用户和路径修改这两行（install.sh 会自动替换）
+User=__USER__
+WorkingDirectory=__INSTALL_DIR__
+EnvironmentFile=__INSTALL_DIR__/.env
+ExecStart=__INSTALL_DIR__/.venv/bin/python -m src.cdc.cdc_daemon
+Restart=always
+RestartSec=30
+StandardOutput=append:__INSTALL_DIR__/logs/cron/daemon_stdout.log
+StandardError=append:__INSTALL_DIR__/logs/cron/daemon_stderr.log
+
+[Install]
+WantedBy=multi-user.target

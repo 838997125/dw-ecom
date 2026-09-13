@@ -1,0 +1,204 @@
+# CDC 同步配置 v2
+# 修正时间字段格式：部分表只有日期 YYYY-MM-DD，不是 YYYY-MM-DD HH:MI:SS
+
+cdc:
+  batch_size: 5000
+
+  full_sync_tables:
+    - SALEOUTMT
+    - SALEOUTDT
+    - SALENOTESMT
+    - SALENOTESDT
+    - GOODSDOC
+    - CLIENTDOC
+    - SUPPLYDOC
+    - STOREHOUSE
+    - STAFFDOC
+    - BATCHCODE
+    - ANGLEBALANCE
+    - PURORDERMT
+    - PURORDERDT
+    - PURINMT
+    - PURINDT
+    - K_D3OMS_STOCKOUTMT_PLAN
+    - K_D3OMS_ORDERREFUNDMT
+    - K_D3OMS_ORDERREFUNDDT
+    - BUSINESSDOC
+    - GOODSATTR
+    - IMEIHIS
+    - K_PRN_SENDLOG
+    - SKWMS_JGM_W
+    - ZZERP_CK_KPD_W
+    - ZZERP_GT_KPD_W
+    - ZZERP_RK_KPD_W
+    - ZZERP_XT_KPD_W
+    - RETBILLMT
+    - RETGOODSDT
+    - SALERTNMT
+    - SALERTNDT
+    - TRBILLMT
+    - TRGOODSDT
+
+  incremental:
+    # === 销售出库 -- 用 SYSDATES（只有日期） ===
+    - table: SALEOUTMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: SALEOUTDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    - table: SALENOTESMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: SALENOTESDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === 主数据 -- 用 LASTMODIFYTIME（有完整时间） ===
+    - table: GOODSDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "GOODSID"
+
+    - table: CLIENTDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "CLIENTID"
+
+    - table: SUPPLYDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "SUPPLIERSID"
+
+    - table: STOREHOUSE
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "WHID"
+
+    - table: STAFFDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "STAFFID"
+
+    - table: BATCHCODE
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "ANGLEID,GOODSID"
+
+    - table: ANGLEBALANCE
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "LOCATID,GOODSID,ANGLEID"
+
+    # === 采购 -- 用 SYSDATES（只有日期） ===
+    - table: PURORDERMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: PURORDERDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    - table: PURINMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: PURINDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === OMS -- 用 LASTMODIFYTIME（有完整时间） ===
+    - table: K_D3OMS_STOCKOUTMT_PLAN
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "ERP_ORDER_ID"
+
+    - table: K_D3OMS_ORDERREFUNDMT
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "ERP_ORDER_ID"
+      detail_table: K_D3OMS_ORDERREFUNDDT
+      detail_fk: "ERP_ORDER_ID"
+      detail_pk: "ERP_ORDER_ID,ERP_ORDER_SN"
+
+    # === 补充表 -- 2026-07-24 ===
+    # 业务主体
+    - table: BUSINESSDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BUSINESSID"
+
+    # 商品属性
+    - table: GOODSATTR
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "GOODSID"
+
+    # IMEI 历史 -- 用 DATES（日期级）
+    - table: IMEIHIS
+      cdc_column: "DATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "SERIALNUM,IMEINO,BILLNO"
+
+    # 打印发送日志 -- 用 CREATETIME（字符串）
+    - table: K_PRN_SENDLOG
+      cdc_column: "CREATETIME"
+      cdc_format: "YYYYMMDDHH24MISS"
+      primary_key: "GUID"
+
+    # 仓库JGM -- 无时间字段，只能全量
+    # SKWMS_JGM_W 没有增量字段，不在增量配置中
+
+    # 出库开票单
+    - table: ZZERP_CK_KPD_W
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BILLNO,BILLSN"
+
+    # 柜台开票单
+    - table: ZZERP_GT_KPD_W
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BILLNO,BILLSN"
+
+    # 入库开票单
+    - table: ZZERP_RK_KPD_W
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BILLNO,BILLSN"
+
+    # 系统开票单
+    - table: ZZERP_XT_KPD_W
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BILLNO,BILLSN"
+
+    # === 采购退货 -- SYSDATES 只有日期 ===
+    - table: RETBILLMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: RETGOODSDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === 销售退货 -- SYSDATES 只有日期 ===
+    - table: SALERTNMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: SALERTNDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === 调拨/移库 -- SYSDATES 只有日期 ===
+    - table: TRBILLMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: TRGOODSDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"

@@ -1,0 +1,249 @@
+# ============================================
+# config.yaml - 数据仓库配置
+# ============================================
+
+oracle:
+  host: "YOUR_ORACLE_HOST"        # 例如内网 IP 或主机名
+  port: 1521
+  service_name: "YOUR_SERVICE_NAME"  # 例如 PDB1 / ORCLPDB1
+  username: "YOUR_ORACLE_USER"
+  password: "${ORACLE_PASSWORD}"   # 也可直接写明文；建议用环境变量
+  schema: "RACE"
+
+duckdb:
+  db_path: "data/duckdb/ecom.duckdb"
+
+# CDC 同步配置
+cdc:
+  # 全量同步的表（首次运行或重建时用）
+  full_sync_tables:
+    - SALEOUTMT
+    - SALEOUTDT
+    - SALENOTESMT
+    - SALENOTESDT
+    - GOODSDOC
+    - CLIENTDOC
+    - SUPPLYDOC
+    - STOREHOUSE
+    - STAFFDOC
+    - BATCHCODE
+    - ANGLEBALANCE
+    - PURORDERMT
+    - PURORDERDT
+    - PURINMT
+    - PURINDT
+    - K_D3OMS_STOCKOUTMT_PLAN
+    - K_D3OMS_ORDERREFUNDMT
+    - K_D3OMS_ORDERREFUNDDT
+    - BUSINESSDOC
+    - GOODSATTR
+    - IMEIHIS
+    - K_PRN_SENDLOG
+    - SKWMS_JGM_W
+    - ZZERP_CK_KPD_W
+    - ZZERP_GT_KPD_W
+    - ZZERP_RK_KPD_W
+    - ZZERP_XT_KPD_W
+    - RETBILLMT
+    - RETGOODSDT
+    - SALERTNMT
+    - SALERTNDT
+    - TRBILLMT
+    - TRGOODSDT
+
+  # 增量同步配置
+  incremental:
+    # === 销售出库 -- SYSDATES 只有日期 ===
+    - table: SALEOUTMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: SALEOUTDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    - table: SALENOTESMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: SALENOTESDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === 主数据 -- LASTMODIFYTIME 有完整时间 ===
+    - table: GOODSDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "GOODSID"
+
+    - table: CLIENTDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "CLIENTID"
+
+    - table: SUPPLYDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "SUPPLIERSID"
+
+    - table: STOREHOUSE
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "WHID"
+
+    - table: STAFFDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "STAFFID"
+
+    - table: BATCHCODE
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "ANGLEID,GOODSID"
+
+    - table: ANGLEBALANCE
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "LOCATID,GOODSID,ANGLEID"
+
+    # === 采购 -- SYSDATES 只有日期 ===
+    - table: PURORDERMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: PURORDERDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    - table: PURINMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: PURINDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === OMS -- LASTMODIFYTIME 有完整时间 ===
+    - table: K_D3OMS_STOCKOUTMT_PLAN
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "ERP_ORDER_ID"
+
+    - table: K_D3OMS_ORDERREFUNDMT
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "ERP_ORDER_ID"
+      detail_table: K_D3OMS_ORDERREFUNDDT
+      detail_fk: "ERP_ORDER_ID"
+      detail_pk: "ERP_ORDER_ID,ERP_ORDER_SN"
+
+    # === 补充表 -- 2026-07-24 ===
+    - table: BUSINESSDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BUSINESSID"
+
+    - table: GOODSATTR
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "GOODSID"
+
+    - table: IMEIHIS
+      cdc_column: "DATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "SERIALNUM,IMEINO,BILLNO"
+
+    - table: K_PRN_SENDLOG
+      cdc_column: "CREATETIME"
+      cdc_format: "YYYYMMDDHH24MISS"
+      primary_key: "GUID"
+
+    - table: ZZERP_CK_KPD_W
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BILLNO,BILLSN"
+
+    - table: ZZERP_GT_KPD_W
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BILLNO,BILLSN"
+
+    - table: ZZERP_RK_KPD_W
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BILLNO,BILLSN"
+
+    - table: ZZERP_XT_KPD_W
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "BILLNO,BILLSN"
+
+    # === 采购退货 -- SYSDATES 只有日期 ===
+    - table: RETBILLMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: RETGOODSDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === 销售退货 -- SYSDATES 只有日期 ===
+    - table: SALERTNMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: SALERTNDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === 调拨/移库 -- SYSDATES 只有日期 ===
+    - table: TRBILLMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: TRGOODSDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === 连锁目录清单相关表 -- 2026-08-17 ===
+    # PGPRICE 价格表 - 有 LASTMODIFYTIME
+    - table: PGPRICE
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "PACKID,GOODSID,ENTID"
+
+    # CONTACTDOC 联系人表 - 有 LASTMODIFYTIME
+    - table: CONTACTDOC
+      cdc_column: "LASTMODIFYTIME"
+      cdc_format: "YYYY-MM-DD HH24:MI:SS"
+      primary_key: "CONTACTID"
+
+    # REQUESTMT 请货单主表 - DATES 只有日期
+    - table: REQUESTMT
+      cdc_column: "SYSDATES"
+      cdc_format: "YYYY-MM-DD"
+      primary_key: "BILLNO"
+      detail_table: REQUESTDT
+      detail_fk: "BILLNO"
+      detail_pk: "BILLNO,BILLSN"
+
+    # === WMS 追溯码（ID 自增模式，5分钟增量） ===
+    - table: SKWMS_JGM_W
+      cdc_mode: id
+      cdc_column: "ID"
+      primary_key: "ID"
+
+  # 批量大小
+  batch_size: 5000
+
+  # 快照表（无时间戳，每日全量刷新）-- 连锁目录清单相关
+  snapshot_tables:
+    - K_LSXS_DT      # 连锁门店销量快照
+    - K_LSKC_DT      # 连锁门店库存快照
+    - STORBALANCE    # 仓库库存余额
+    - ZBKXKC         # 总部可销库存
+    - GOODSOCCU      # 商品占用量
+
+logging:
+  level: "INFO"
+  dir: "logs"
